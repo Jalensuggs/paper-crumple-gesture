@@ -299,18 +299,42 @@ function hideOverlay() {
 }
 
 /* ---------------- 初始化:纸团视频 ---------------- */
+let paperVideoBlobUrl = null;
+
 function initPaperVideo() {
-  return new Promise((resolve, reject) => {
-    const ready = () => {
+  const waitMetadata = () => new Promise((resolve, reject) => {
+    if (paperVideo.readyState >= 1) return resolve();
+    paperVideo.addEventListener("loadedmetadata", resolve, { once: true });
+    paperVideo.addEventListener("error", () => reject(new Error("视频加载失败,请确认 揉纸_scrub.mp4 / 揉纸.mp4 在同一目录")), { once: true });
+  });
+
+  // iOS 上(Chrome/Safari 同为 WebKit 内核)<video> 只要没真正 play() 过,取数据
+  // 就非常保守:即便 src 是可正常访问的网络地址、preload="auto",也可能永远停
+  // 在只读出 metadata 的状态,从不解码/绘制任何一帧 —— currentTime 改了,画面
+  // 却一直是黑的。解决办法是把视频整体 fetch 成 Blob(现在只有 1.3MB)再用
+  // blob: URL 喂给 <video>:资源已经完整在本地,不存在"要不要继续从网络取数据"
+  // 的判断,WebKit 会正常解码。全程仍然只是替换 src / seek,不调用 play()。
+  const source = paperVideo.querySelector("source");
+  const url = (source && source.src) || paperVideo.currentSrc;
+
+  const viaBlob = url
+    ? fetch(url)
+        .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.blob(); })
+        .then((blob) => {
+          paperVideoBlobUrl = URL.createObjectURL(blob);
+          paperVideo.src = paperVideoBlobUrl;
+          paperVideo.load();
+          return waitMetadata();
+        })
+    : Promise.reject(new Error("no <source>"));
+
+  return viaBlob
+    .catch(() => waitMetadata()) // fetch 失败(离线/跨域等)时退回原生 <source> 解析
+    .then(() => {
       videoDuration = paperVideo.duration || 0;
       // 轻微 seek 一次,强制解码出第一帧(不播放)
       try { paperVideo.currentTime = 0.001; } catch (_) { /* noop */ }
-      resolve();
-    };
-    if (paperVideo.readyState >= 1) return ready();
-    paperVideo.addEventListener("loadedmetadata", ready, { once: true });
-    paperVideo.addEventListener("error", () => reject(new Error("视频加载失败,请确认 揉纸_scrub.mp4 / 揉纸.mp4 在同一目录")), { once: true });
-  });
+    });
 }
 
 /* ---------------- 初始化:MediaPipe ---------------- */
@@ -448,6 +472,7 @@ retryBtn.addEventListener("click", async () => {
 
 window.addEventListener("pagehide", () => {
   if (cameraStream) cameraStream.getTracks().forEach((t) => t.stop());
+  if (paperVideoBlobUrl) URL.revokeObjectURL(paperVideoBlobUrl);
 });
 
 main();
