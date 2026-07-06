@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#000000" />
+  <title>揉纸 · Paper Crumple — 手势控制视频时间轴</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="stage">
+    <header class="head">
+      <h1 class="title">揉&thinsp;纸<span class="title-en">Paper&nbsp;Crumple</span></h1>
+      <p class="hint">对着摄像头伸出一只手 —— <b>张开手掌</b>展开头像 · <b>慢慢握拢</b>把他揉成纸团</p>
+    </header>
+
+    <section class="video-wrap">
+      <!--
+        纸团视频:muted / playsinline / preload=auto,无 autoplay、无 loop。
+        它从不播放,只被手势 seek(main.js 中绝不调用 paperVideo.play())。
+      -->
+      <video id="paper-video" muted playsinline preload="auto" poster="原来.png" disablepictureinpicture>
+        <source src="揉纸_scrub.mp4" type="video/mp4" />
+        <source src="揉纸.mp4" type="video/mp4" />
+      </video>
+
+      <div id="status-pill" class="status-pill waiting">
+        <span class="dot"></span>
+        <span class="status-lines">
+          <span id="status-text">Waiting for Gesture</span>
+          <span id="status-sub">等待手势</span>
+        </span>
+      </div>
+    </section>
+
+    <section class="progress-row" aria-label="揉皱进度">
+      <span class="edge-label">完整<i>portrait</i></span>
+      <div class="track">
+        <div id="progress-fill"></div>
+        <div id="progress-knob"></div>
+      </div>
+      <span class="edge-label right">纸团<i>crumpled</i></span>
+      <span id="progress-num">0%</span>
+    </section>
+  </main>
+
+  <!-- 摄像头小窗(镜像)+ 手部骨架叠加 -->
+  <aside class="cam-pip">
+    <div class="cam-mirror">
+      <video id="cam-video" muted playsinline></video>
+      <canvas id="cam-canvas"></canvas>
+    </div>
+    <span id="cam-label">CAMERA OFF</span>
+  </aside>
+
+  <!-- 加载 / 摄像头权限 / 错误 提示层 -->
+  <div id="overlay" class="overlay">
+    <div class="overlay-card">
+      <div class="overlay-icon" id="overlay-icon">✋</div>
+      <h2 id="overlay-title">正在加载手势模型…</h2>
+      <p id="overlay-msg">Loading MediaPipe HandLandmarker</p>
+      <button id="retry-btn" hidden>重新请求摄像头</button>
+      <p class="overlay-tip" id="overlay-tip" hidden>没有摄像头?也可以用键盘 ← → 方向键预览揉纸效果</p>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
