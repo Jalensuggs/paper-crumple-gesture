@@ -53,7 +53,7 @@ python3 -m http.server 4173
 | --- | --- |
 | `index.html` / `style.css` / `main.js` | 页面结构、样式与手势 → 时间轴的核心交互逻辑 |
 | `揉纸.mp4` | 原始视频(仅 1 个关键帧,不适合逐帧 seek,保留作后备源) |
-| `揉纸_scrub.mp4` | 由原片重编码的全关键帧版本(121/121 I-frame),页面实际使用,保证拖动顺滑 |
+| `揉纸_scrub.mp4` | 由原片重编码版本(H.264 Main / 每 6 帧一个关键帧 / 码率约 2Mbps),页面实际使用;关键帧密度足够拖动顺滑,同时兼顾移动端解码与加载速度 |
 | `vendor/` | MediaPipe `HandLandmarker` 模型 + WASM 运行时(本地化,离线可用) |
 | `原来.png` / `揉皱.png` | 首帧 / 尾帧参考图(`原来.png` 同时用作视频 `poster`) |
 

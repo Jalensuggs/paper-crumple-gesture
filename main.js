@@ -223,14 +223,19 @@ function renderLoop(now) {
   if (videoDuration > 0 && controlActive) {
     // 要求 5 的公式:targetTime = progress * duration;currentTime 向其 lerp。
     // 系数按 dt 做帧率无关校正,60fps 时恰为 0.18,高刷屏收敛速度一致。
+    //
+    // 注意:这里故意不判断 video.seeking 再决定要不要写 currentTime。
+    // 部分移动端浏览器(如 iOS 上的 Chrome/Safari,底层都是 WebKit)完成一次 seek
+    // 的耗时明显长于桌面端;如果等 seeking 变回 false 才允许下一次赋值,一旦某次
+    // seek 异常缓慢或卡住,seeking 会一直停留在 true,后续所有手势都无法再驱动画
+    // 面,直接卡死在黑屏/当前帧。每帧直接重新赋值 currentTime 是浏览器原生支持的
+    // 用法(新的赋值会自动取代尚未完成的旧 seek),各类拖动进度条都是这样实现的。
     const maxTime = videoDuration - TUNING.END_EPS;
     const targetTime = clamp(smoothProgress * videoDuration, 0, maxTime);
-    if (!paperVideo.seeking) {
-      const k = 1 - Math.pow(1 - TUNING.TIME_LERP, dt / (1000 / 60));
-      const next = clamp(lerp(paperVideo.currentTime, targetTime, k), 0, maxTime);
-      if (Math.abs(next - paperVideo.currentTime) > TUNING.MIN_SEEK_STEP) {
-        paperVideo.currentTime = next; // 从不 play(),只 seek
-      }
+    const k = 1 - Math.pow(1 - TUNING.TIME_LERP, dt / (1000 / 60));
+    const next = clamp(lerp(paperVideo.currentTime, targetTime, k), 0, maxTime);
+    if (Math.abs(next - paperVideo.currentTime) > TUNING.MIN_SEEK_STEP) {
+      paperVideo.currentTime = next; // 从不 play(),只 seek
     }
   }
   // 无手且无键盘控制:不写 currentTime,画面定格在当前帧(要求 8)
