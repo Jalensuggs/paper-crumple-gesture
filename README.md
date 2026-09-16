@@ -1,5 +1,7 @@
 # 揉纸 · Paper Crumple —— 手势控制视频时间轴
 
+**GitHub Pages 预览 →** https://jalensuggs.github.io/paper-crumple-gesture/
+
 用一只手隔空控制视频进度:**张开手掌**,折纸头像保持完整;**慢慢握拢 / 捏合**,头像被实时揉成纸团;再张开,纸团反向展开。视频从不播放,`video.currentTime` 完全由手势驱动 —— 就像用手在拖动时间轴。
 
 🔗 **在线体验:** https://paper-crumple-gesture.vercel.app
